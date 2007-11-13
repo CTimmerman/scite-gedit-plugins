@@ -68,12 +68,13 @@ class GeditTerminal(gtk.HBox):
         'visible_bell'          : False
     }
 
-    def __init__(self):
+    def __init__(self, window):
         gtk.HBox.__init__(self, False, 4)
 
         gconf_client.add_dir(self.GCONF_PROFILE_DIR,
                              gconf.CLIENT_PRELOAD_RECURSIVE)
-
+        self._window = window
+        self._encoding = gedit.encoding_get_current()
         self._vte = vte.Terminal()
         self.reconfigure_vte()
         self._vte.set_size(self._vte.get_column_count(), 5)
@@ -143,7 +144,7 @@ class GeditTerminal(gtk.HBox):
 #define DINGUS1 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?"
 #define DINGUS2 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?/[-A-Za-z0-9_\\$\\.\\+\\!\\*\\(\\),;:@&=\\?/~\\#\\%]*[^]'\\.}>\\) ,\\\"]"
 #(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?
-        id = self._vte.match_add("[-A-Za-z0-9\\./]+:([0-9]+):[-A-Za-z0-9\\./]*")
+        id = self._vte.match_add("[A-Za-z0-9\\./\\_\\-]+:([0-9]+):")
         self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
         id = self._vte.match_add("File .+ line [0-9]+")
         self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
@@ -160,16 +161,43 @@ class GeditTerminal(gtk.HBox):
             elif modifiers == gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK:
                 self.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
                 return True
+        elif event.keyval == gtk.keysyms.F6:
+            if modifiers == gtk.gdk.SHIFT_MASK:
+                self.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
+            else:
+                self.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
+            return True
         return False
 
     def on_vte_button_press(self, term, event):
-        
         if event.button == 1:
-            #vte_terminal_get_padding(terminal, &xpad, &ypad);           
             col, row = int(floor(event.x / self._vte.get_char_width())), int(floor(event.y / self._vte.get_char_height()))
             match = self._vte.match_check(col, row)
             if match:
-                self._vte.feed_child(match[0])
+                os.chdir(self.current_directory())      
+                if match[1] == 0:
+                    uri, line = match[0].split(":")[0:2]
+                else:
+                    details = match[0].split()
+                    print details
+                    uri, line = details[1].strip(",").strip("\""), details[3]
+                uri = "file://" + os.path.abspath(uri)
+                line = int(line)
+                tab = self._window.get_tab_from_uri(uri) 
+                if tab == None:
+                    tab = self._window.create_tab_from_uri( uri, self._encoding, line, False, False )
+                else:
+                    doc = tab.get_document()
+                    doc.begin_user_action()
+                    it = doc.get_iter_at_line_offset(line-1,0)
+                    doc.place_cursor(it)
+                    (start, end) = doc.get_bounds()
+                    self._window.get_active_view().scroll_to_iter(end,0.0)
+                    self._window.get_active_view().scroll_to_iter(it,0.0)
+                    self._window.get_active_view().grab_focus()
+                    doc.end_user_action()
+                self._window.set_active_tab( tab)                    
+
         elif event.button == 3:
             self.do_popup(event)
             return True
@@ -204,6 +232,9 @@ class GeditTerminal(gtk.HBox):
                        0, gtk.get_current_event_time())
             menu.select_first(False)        
 
+    def current_directory(self):
+        return os.path.expanduser(self._vte.get_window_title().split(':')[1].strip())
+        
     def change_directory(self, path):
         path = path.replace('\\', '\\\\').replace('"', '\\"')
         self._vte.feed_child('cd "%s"\n' % path)
@@ -232,7 +263,7 @@ class TerminalWindowHelper(object):
     def __init__(self, window):
         self._window = window
 
-        self._panel = GeditTerminal()
+        self._panel = GeditTerminal(window)
         self._panel._window = window
         self._panel.connect("populate-popup", self.on_panel_populate_popup)
         self._panel.show()
