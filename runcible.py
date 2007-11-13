@@ -24,6 +24,7 @@ import gedit
 import gedit.utils
 import pango
 import gtk
+import gtk.gdk
 import gobject
 import vte
 import gconf
@@ -31,7 +32,7 @@ import gettext
 import gnomevfs
 import os
 from gpdefs import *
-
+from math import *
 try:
     gettext.bindtextdomain(GETTEXT_PACKAGE, GP_LOCALEDIR)
     _ = lambda s: gettext.dgettext(GETTEXT_PACKAGE, s);
@@ -139,7 +140,14 @@ class GeditTerminal(gtk.HBox):
 
         self._vte.set_emulation(self.defaults['emulation'])
         self._vte.set_visible_bell(self.defaults['visible_bell'])
-
+#define DINGUS1 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?"
+#define DINGUS2 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?/[-A-Za-z0-9_\\$\\.\\+\\!\\*\\(\\),;:@&=\\?/~\\#\\%]*[^]'\\.}>\\) ,\\\"]"
+#(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?
+        id = self._vte.match_add("[-A-Za-z0-9\\./]+:([0-9]+):[-A-Za-z0-9\\./]*")
+        self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
+        id = self._vte.match_add("File .+ line [0-9]+")
+        self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
+        
     def on_gconf_notification(self, client, cnxn_id, entry, what):
         self.reconfigure_vte()
 
@@ -155,7 +163,14 @@ class GeditTerminal(gtk.HBox):
         return False
 
     def on_vte_button_press(self, term, event):
-        if event.button == 3:
+        
+        if event.button == 1:
+            #vte_terminal_get_padding(terminal, &xpad, &ypad);           
+            col, row = int(floor(event.x / self._vte.get_char_width())), int(floor(event.y / self._vte.get_char_height()))
+            match = self._vte.match_check(col, row)
+            if match:
+                self._vte.feed_child(match[0])
+        elif event.button == 3:
             self.do_popup(event)
             return True
 
