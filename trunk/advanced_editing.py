@@ -31,6 +31,7 @@ adv_edit_str = """
         <menuitem name="DeleteLine"          action="DeleteLine"/>
         <menuitem name="DeleteLineBackwards" action="DeleteLineBackwards"/>
         <menuitem name="DuplicateLine"       action="DuplicateLine"/>
+        <menuitem name="SwapLine"       action="SwapLine"/>
         <separator name="AdvancedEditingSep2"/>
         <menuitem name="RemoveWhitespace"    action="RemoveWhitespace"/>
         <menuitem name="ReduceWhitespace"    action="ReduceWhitespace"/>
@@ -58,6 +59,33 @@ class AdvancedEditingPlugin(gedit.Plugin):
     itend.forward_line();
     line = doc.get_slice(itstart, itend, True)
     doc.delete(itstart, itend);
+    doc.end_user_action()
+
+  def swap_line(self, action, window):
+    view = window.get_active_view()
+    doc  = window.get_active_document()
+    doc.begin_user_action()
+    itstart1 = doc.get_iter_at_mark(doc.get_insert())
+    view.do_move_cursor(view, gtk.MOVEMENT_PARAGRAPH_ENDS, -1, 0)
+    itend1 = doc.get_iter_at_mark(doc.get_insert())
+    itstart2 = doc.get_iter_at_mark(doc.get_insert())
+    itend2 = doc.get_iter_at_mark(doc.get_insert())
+    itstart1.backward_line()
+    itend1.backward_line()
+    itend1.forward_line()
+    itend2.forward_line()    
+    line1 = doc.get_slice(itstart1, itend1, True)
+    line2 = doc.get_slice(itstart2, itend2, True)
+    # delete first line
+    doc.delete(itstart1, itend1)
+    # delete next line
+    itstart1 = doc.get_iter_at_mark(doc.get_insert())
+    itend1 = doc.get_iter_at_mark(doc.get_insert())
+    itend1.forward_line()    
+    doc.delete(itstart1, itend1)
+    doc.insert_at_cursor(line2)   
+    doc.insert_at_cursor(line1)    
+    view.do_move_cursor(view, gtk.MOVEMENT_PARAGRAPHS, -1, 0)
     doc.end_user_action()
 
   def duplicate_line(self, action, window):
@@ -88,6 +116,7 @@ class AdvancedEditingPlugin(gedit.Plugin):
       ('DeleteLineBackwards', None, 'Kill Line',             '<Control>j',        "Kill Line",             self.delete_line_bw),
       ('DeleteLineBackwards2', None, 'Kill Line',             '<Control>q',        "Kill Line",             self.delete_line_bw),      
       ('DuplicateLine',       None, 'Duplicate Line',        '<Control>d',        "Duplicate Line",        self.duplicate_line),
+      ('SwapLine',       None, 'Swap Line',        '<Control>t',        "Swap Line",        self.swap_line),
       ('RemoveWhitespace',    None, 'Remove Whitespace',     '<Shift><Alt>j',     "Remove Whitespace",     self.remove_whitespace),
       ('ReduceWhitespace',    None, 'Reduce Whitespace',     '<Alt>j',            "Reduce Whitespace",     self.reduce_whitespace)
     ]
