@@ -1,0 +1,10 @@
+[Gedit Plugin]
+Loader=python
+Module=leap
+IAge=2
+Name=leap
+Description=Leap
+Icon=gedit-plugin
+Authors=Trond Danielsen <trond.danielsen@gmail.com>
+Copyright=Copyright © 2006 Trond Danielsen
+Website=http://www.gedit.org
