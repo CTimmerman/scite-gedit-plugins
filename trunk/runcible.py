@@ -39,6 +39,34 @@ try:
 except:
     _ = lambda s: s
 
+
+class ConfigDialog(gtk.Dialog):
+    def __init__(self, parent, config):
+        # Create config diaog window
+        title = _("Runcible properties")
+        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK)
+
+        super(toggle_dlg, self).__init__(title, parent, 0, buttons)
+        
+        self.vbox.set_homogeneous(False)
+        
+        # Create diaog items
+        self._msg = gtk.Label(_("Comment"))
+        self._msg.set_property("xalign", 0.0)
+        self.vbox.pack_start(self._msg, True, True, 5)
+        
+        self._input = gtk.Entry()
+        self._input.connect("key-press-event", self._on_input_key)
+        self.vbox.pack_start(self._input, True, True, 0)
+        
+        self._note = gtk.Label(_("(leave blank to use source line)"))
+        self.vbox.pack_start(self._note, True, True, 5)
+        
+        self.vbox.show_all()
+        
+        # Setup configuration dictionary
+        self._config = config
+
 class GeditTerminal(gtk.HBox):
     """VTE terminal which follows gnome-terminal default profile options"""
 
@@ -56,11 +84,13 @@ class GeditTerminal(gtk.HBox):
         'allow_bold'            : True,
         'audible_bell'          : False,
         'background'            : None,
-        'background_color'      : '#EEEEEE',
+        #'background_color'      : '#EEEEEE',
+        'background_color'      : '#FFFFFF',
         'backspace_binding'     : 'ascii-del',
         'cursor_blinks'         : False,
         'emulation'             : 'xterm',
-        'font_name'             : 'Monospace 10',
+        #'font_name'             : 'Monospace 10',
+        'font_name'             : 'Monospace 8',
         'foreground_color'      : '#000000',
         'scroll_on_keystroke'   : False,
         'scroll_on_output'      : False,
@@ -78,7 +108,7 @@ class GeditTerminal(gtk.HBox):
         self._vte = vte.Terminal()
         self.reconfigure_vte()
         self._vte.set_size(self._vte.get_column_count(), 5)
-        self._vte.set_size_request(200, 50)
+#        self._vte.set_size_request(200, 50)
         self._vte.show()
         self.pack_start(self._vte)
         
@@ -270,9 +300,25 @@ class TerminalWindowHelper(object):
 
         image = gtk.Image()
         image.set_from_icon_name("utilities-terminal", gtk.ICON_SIZE_MENU)
-
+    
         bottom = window.get_bottom_panel()
-        bottom.add_item(self._panel, _("Runcible"), image)
+        #bottom.add_item(self._panel, _("Runcible"), image)
+        pane = gtk.HPaned(); 
+        #tab = window.get_active_tab(); 
+
+        v = window.get_bottom_panel().get_parent()
+        h = v.get_parent()
+        v.reparent(pane);
+        v.set_size_request(800, 100)
+        self._panel.set_size_request(100, 100)
+#        pane.pack_start (v)
+   #     pane.pack_start (self._panel, expand=False)
+        pane.add(self._panel)
+        h.add(pane);
+        
+        #self._panel.set_position(400)
+        pane.show_all(); 
+        bottom.hide()
         self._insert_menu()
         
     def deactivate(self):
