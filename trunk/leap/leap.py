@@ -103,6 +103,8 @@ class Leap:
                     return False
                 if event.keyval < 255:
                     self.search_string += chr(event.keyval)
+                elif event.keyval == gtk.keysyms.Return:
+                    self.search_string += "\n"
                 elif event.keyval == gtk.keysyms.BackSpace:
                     self.search_string = self.search_string[:-1]                
                 self.update_statusbar()
