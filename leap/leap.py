@@ -9,7 +9,7 @@ class Leap:
 
     def __init__(self, statusbar, view, window):
         self.window = window
-        self.view = view # view is shared across documents!!!
+        self.view = view
         self.doc = view.get_buffer()
         print "__init__:     %s in %s" % (self, self.view)
         self.statusbar = statusbar
@@ -22,7 +22,8 @@ class Leap:
         self.searching_forward = False
         self.start_found, self.end_found = None, None
         self.anchor = None
-
+        self.select_anchor = None
+        
     def deactivate(self):
         self.view.disconnect(self.handler_ids[0])
         self.insert_mode()
@@ -78,6 +79,7 @@ class Leap:
             # exit mode if ctrl is down (i.e. ctrl alt shortcuts)
             if (event.state & gtk.gdk.CONTROL_MASK):
                 self.anchor = None
+                self.select_anchor = None
                 return False
             # selection
             if ((left_alt_pressed or right_alt_pressed) and self.anchor):
@@ -86,20 +88,26 @@ class Leap:
                         self.doc.select_range(self.start_found, self.end_found)
                     else:
                         if self.searching_forward:
-                            self.doc.select_range(self.anchor, self.end_found)
+                            self.doc.select_range(self.select_anchor, self.end_found)
                         else:
-                            self.doc.select_range(self.start_found, self.anchor)
+                            self.doc.select_range(self.start_found, self.select_anchor)
             # start a search     
-            elif left_alt_pressed or right_alt_pressed:
+            elif left_alt_pressed or right_alt_pressed:                    
                 self.searching_forward = right_alt_pressed
                 self.search_string = ""
                 self.update_statusbar()
-                self.anchor = self.doc.get_iter_at_mark(self.doc.get_insert())
-            # search in progress, now handle characters
+                if self.doc.get_has_selection():
+                    self.anchor = self.doc.get_selection_bounds()[1]
+                    self.select_anchor = self.doc.get_selection_bounds()[0]
+                else:
+                    self.anchor = self.doc.get_iter_at_mark(self.doc.get_insert())
+                    self.select_anchor = self.anchor
+            # search in progress, then handle characters
             elif self.anchor:
                 # exit mode if alt not depressed (usually after alt tab, alt space)
                 if not (event.state & gtk.gdk.MOD1_MASK):
                     self.anchor = None
+                    self.select_anchor = None
                     return False
                 if event.keyval < 255:
                     self.search_string += chr(event.keyval)
@@ -114,4 +122,4 @@ class Leap:
     def on_key_release_event(self, view, event):
         if event.keyval == gtk.keysyms.Alt_L or event.keyval == gtk.keysyms.Alt_R:
             self.anchor = None
-
+            self.select_anchor = None
