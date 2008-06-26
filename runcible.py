@@ -174,7 +174,7 @@ class GeditTerminal(gtk.HBox):
 #define DINGUS1 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?"
 #define DINGUS2 "(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?/[-A-Za-z0-9_\\$\\.\\+\\!\\*\\(\\),;:@&=\\?/~\\#\\%]*[^]'\\.}>\\) ,\\\"]"
 #(((news|telnet|nntp|file|http|ftp|https)://)|(www|ftp)[-A-Za-z0-9]*\\.)[-A-Za-z0-9\\.]+(:[0-9]*)?
-        id = self._vte.match_add("[A-Za-z0-9\\./\\_\\-]+:([0-9]+):")
+        id = self._vte.match_add("[A-Za-z0-9\\./\\_\\-~]+:([0-9]+):")
         self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
         id = self._vte.match_add("File .+ line [0-9]+")
         self._vte.match_set_cursor_type(id,  gtk.gdk.HAND1)
@@ -211,7 +211,7 @@ class GeditTerminal(gtk.HBox):
                     details = match[0].split()
                     print details
                     uri, line = details[1].strip(",").strip("\""), details[3]
-                uri = "file://" + os.path.abspath(uri)
+                uri = "file://" + os.path.expanduser(os.path.abspath(uri))
                 line = int(line)
                 tab = self._window.get_tab_from_uri(uri) 
                 if tab == None:

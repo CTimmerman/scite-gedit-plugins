@@ -115,7 +115,7 @@ class AdvancedEditingPlugin(gedit.Plugin):
       ('DeleteLine',          None, 'Delete To End Of Line', '<Shift><Control>j', "Delete To End Of Line", self.delete_line),
       ('DeleteLineBackwards', None, 'Kill Line',             '<Control>j',        "Kill Line",             self.delete_line_bw),
       ('DeleteLineBackwards2', None, 'Kill Line',             '<Control>q',        "Kill Line",             self.delete_line_bw),      
-      ('DuplicateLine',       None, 'Duplicate Line',        '<Control>d',        "Duplicate Line",        self.duplicate_line),
+      ('DuplicateLine',       None, 'Duplicate Line',        '<Control><shift>d',        "Duplicate Line",        self.duplicate_line),
       ('SwapLine',       None, 'Swap Line',        '<Control>t',        "Swap Line",        self.swap_line),
       ('RemoveWhitespace',    None, 'Remove Whitespace',     '<Shift><Alt>j',     "Remove Whitespace",     self.remove_whitespace),
       ('ReduceWhitespace',    None, 'Reduce Whitespace',     '<Alt>j',            "Reduce Whitespace",     self.reduce_whitespace)

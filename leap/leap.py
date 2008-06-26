@@ -54,6 +54,7 @@ class Leap:
                 self.view.scroll_to_iter(destination_iter, 0)            
             # if not found, move back to anchor
             else:
+                self.start_found, self.end_found = None, None
                 self.doc.place_cursor(self.anchor)
                 self.view.scroll_to_iter(self.anchor, 0)            
         else:
@@ -65,6 +66,7 @@ class Leap:
                 self.view.scroll_to_iter(destination_iter, 0)
             # if not found, move back to anchor
             else:
+                self.start_found, self.end_found = None, None
                 self.doc.place_cursor(self.anchor)
                 self.view.scroll_to_iter(self.anchor, 0)            
     
@@ -121,5 +123,7 @@ class Leap:
 
     def on_key_release_event(self, view, event):
         if event.keyval == gtk.keysyms.Alt_L or event.keyval == gtk.keysyms.Alt_R:
+#             if self.start_found:
+#                 self.doc.select_range(self.start_found, self.end_found)
             self.anchor = None
             self.select_anchor = None
