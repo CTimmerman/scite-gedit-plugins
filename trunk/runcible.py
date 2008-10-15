@@ -123,7 +123,7 @@ class GeditTerminal(gtk.HBox):
         self._vte.connect("button-press-event", self.on_vte_button_press)
         self._vte.connect("popup-menu", self.on_vte_popup_menu)
         self._vte.connect("child-exited", lambda term: term.fork_command())
-
+        self._vte.set_scroll_on_output(True)
         self._vte.fork_command()
 
     def reconfigure_vte(self):
@@ -288,7 +288,6 @@ class GeditTerminal(gtk.HBox):
         
     def run(self, filename):
         self._window.get_active_document().save(True)
-        print filename
         self.change_directory(os.path.dirname(filename))
         basename = os.path.basename(filename)
         self._vte.feed_child('python "%s"\n' % basename)
