@@ -123,7 +123,6 @@ class GeditTerminal(gtk.HBox):
         self._vte.connect("button-press-event", self.on_vte_button_press)
         self._vte.connect("popup-menu", self.on_vte_popup_menu)
         self._vte.connect("child-exited", lambda term: term.fork_command())
-        self._vte.set_scroll_on_output(True)
         self._vte.fork_command()
 
     def reconfigure_vte(self):
@@ -196,6 +195,9 @@ class GeditTerminal(gtk.HBox):
                 self.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
             else:
                 self.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
+            return True
+        elif event.keyval == gtk.keysyms.F5 and modifiers == gtk.gdk.CONTROL_MASK:
+            self.reset()
             return True
         elif event.keyval == gtk.keysyms.F5:
             self.run(self.get_document_path())
@@ -285,13 +287,16 @@ class GeditTerminal(gtk.HBox):
     def change_directory(self, path):
         path = path.replace('\\', '\\\\').replace('"', '\\"')
         self._vte.feed_child('cd "%s"\n' % path)
+    
+    def reset(self):
+        self._vte.feed_child("reset\n")
         
     def run(self, filename):
         self._window.get_active_document().save(True)
         self.change_directory(os.path.dirname(filename))
         basename = os.path.basename(filename)
         self._vte.feed_child('python "%s"\n' % basename)
-    
+        
     def goto_selected_line(self):
         self._vte.feed_child('"%s"' % self._vte.get_text_range())
 
@@ -301,6 +306,7 @@ ui_str = """
     <menu name="ToolsMenu" action="Tools">
       <placeholder name="ToolsOps_3">
             <menuitem name="Run" action="Run"/>
+            <menuitem name="Reset Terminal" action="Reset Terminal"/>
       </placeholder>
     </menu>
   </menubar>
@@ -352,7 +358,13 @@ class TerminalWindowHelper(object):
                                          _("R_un"),
                                          "F5",                                         
                                          _("Run Python code"),
-                                         lambda a, w: self._panel.run(self._panel.get_document_path()))],
+                                         lambda a, w: self._panel.run(self._panel.get_document_path())),
+                                         ("Reset Terminal",
+                                         None,
+                                         _("Re_set Terminal"),
+                                         "<Control>F5",                                         
+                                         _("Reset and clears terminal"),
+                                         lambda a, w: self._panel.reset()),],
                                         self._window)
         manager.insert_action_group(self._action_group, -1)
         self._ui_id = manager.add_ui_from_string(ui_str)
@@ -369,7 +381,7 @@ class TerminalWindowHelper(object):
 
     def on_panel_populate_popup(self, panel, menu):
         menu.prepend(gtk.SeparatorMenuItem())
-        location = self.get_active_document()
+        location = self._panel.get_document_path()
         path = os.path.dirname(location)
         item = gtk.MenuItem(_("C_hange Directory"))
         item.connect("activate", lambda menu_item: panel.change_directory(path))
