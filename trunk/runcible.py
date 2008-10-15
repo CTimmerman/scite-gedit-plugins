@@ -197,6 +197,9 @@ class GeditTerminal(gtk.HBox):
             else:
                 self.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
             return True
+        elif event.keyval == gtk.keysyms.F5:
+            self.run(self.get_document_path())
+            return True
         return False
 
     def on_vte_button_press(self, term, event):
@@ -204,14 +207,19 @@ class GeditTerminal(gtk.HBox):
             col, row = int(floor(event.x / self._vte.get_char_width())), int(floor(event.y / self._vte.get_char_height()))
             match = self._vte.match_check(col, row)
             if match:
-                os.chdir(self.current_directory())      
                 if match[1] == 0:
                     uri, line = match[0].split(":")[0:2]
                 else:
                     details = match[0].split()
                     print details
                     uri, line = details[1].strip(",").strip("\""), details[3]
-                uri = "file://" + os.path.expanduser(os.path.abspath(uri))
+                os.chdir(self.current_directory())
+                print self.current_directory()
+                print os.path.abspath(uri), os.path.join(self.current_directory(), uri)
+                uri = "file://" + os.path.join(self.current_directory(), uri)
+
+                #uri = "file://" + os.path.expanduser(os.path.abspath(uri))
+                #uri = "file://" + self.get_document_path()
                 line = int(line)
                 tab = self._window.get_tab_from_uri(uri) 
                 if tab == None:
@@ -262,15 +270,25 @@ class GeditTerminal(gtk.HBox):
                        0, gtk.get_current_event_time())
             menu.select_first(False)        
 
-    def current_directory(self):
+    def current_directory(self):        
         return os.path.expanduser(self._vte.get_window_title().split(':')[1].strip())
-        
+    
+    def get_document_path(self):
+        doc = self._window.get_active_document()
+        if doc is None:
+            return None
+        uri = doc.get_uri()
+        if uri is not None and gedit.utils.uri_has_file_scheme(uri):
+            return gnomevfs.get_local_path_from_uri(uri)
+        return None
+    
     def change_directory(self, path):
         path = path.replace('\\', '\\\\').replace('"', '\\"')
         self._vte.feed_child('cd "%s"\n' % path)
         
     def run(self, filename):
         self._window.get_active_document().save(True)
+        print filename
         self.change_directory(os.path.dirname(filename))
         basename = os.path.basename(filename)
         self._vte.feed_child('python "%s"\n' % basename)
@@ -320,6 +338,7 @@ class TerminalWindowHelper(object):
         pane.show_all(); 
         bottom.hide()
         self._insert_menu()
+        #window.set_focus_chain([window.get_bottom_panel(), self._panel, window.get_side_panel()])
         
     def deactivate(self):
         self._remove_menu()
@@ -332,9 +351,9 @@ class TerminalWindowHelper(object):
         self._action_group.add_actions([("Run",
                                          None,
                                          _("R_un"),
-                                         "F5",
+                                         "F5",                                         
                                          _("Run Python code"),
-                                         lambda a, w: self._panel.run(self.get_active_document()))],
+                                         lambda a, w: self._panel.run(self._panel.get_document_path()))],
                                         self._window)
         manager.insert_action_group(self._action_group, -1)
         self._ui_id = manager.add_ui_from_string(ui_str)
@@ -348,23 +367,6 @@ class TerminalWindowHelper(object):
     def update_ui(self):
         pass
 
-    def get_active_document(self):
-        doc = self._window.get_active_document()
-        if doc is None:
-            return None
-        uri = doc.get_uri()
-        if uri is not None and gedit.utils.uri_has_file_scheme(uri):
-            return gnomevfs.get_local_path_from_uri(uri)
-        return None
-
-    def get_active_document_directory(self):
-        doc = self._window.get_active_document()
-        if doc is None:
-            return None
-        uri = doc.get_uri()
-        if uri is not None and gedit.utils.uri_has_file_scheme(uri):
-            return os.path.dirname(gnomevfs.get_local_path_from_uri(uri))
-        return None
 
     def on_panel_populate_popup(self, panel, menu):
         menu.prepend(gtk.SeparatorMenuItem())
@@ -375,7 +377,7 @@ class TerminalWindowHelper(object):
         item.set_sensitive(path is not None)
         menu.prepend(item)
         
-        item = gtk.MenuItem(_("Run"))        
+        item = gtk.MenuItem(_("Run"))
         item.connect("activate", lambda menu_item: panel.run(location))
         item.set_sensitive(path is not None)
         menu.prepend(item)
