@@ -178,6 +178,12 @@ class window_helper:
         
         self._act_toggle_adv = gtk.Action("ToggleBookmarkAdvanced", _("Toggle & edit"), _("Toggle & edit"), None)
         self._act_toggle_adv.connect("activate", self._on_toggle_bookmark, True)
+
+        self._next_bookmark = gtk.Action("NextBookmark", _("Next Bookmark"), _("Next Bookmark"), None)
+        self._next_bookmark("activate", self._on_next_bookmark)
+
+        self._previous_bookmark = gtk.Action("PreviousBookmark", _("Previous Bookmark"), _("Previous Bookmark"), None)
+        self._previous_bookmark("activate", self._on_previous_bookmark)
         
         self._act_edit = gtk.Action("EditBookmark", _("Edit bookmark"), _("Edit bookmark"), None)
         self._act_edit.connect("activate", self._on_edit_clicked)
@@ -198,6 +204,8 @@ class window_helper:
         self._action_group.add_action_with_accel(self._act_toggle_adv, "<Ctrl><Shift>b")
         self._action_group.add_action_with_accel(self._act_edit, "<Ctrl><Alt>b")
         #XXX next bookmark previous bookmark here
+        self._action_group.add_action_with_accel(self._next_bookmark, "F2")
+        self._action_group.add_action_with_accel(self._previous_bookmark, "<Shift>F2")
         # Insert action group
         manager.insert_action_group(self._action_group, -1)
 
@@ -215,8 +223,14 @@ class window_helper:
         # Remove the action group
         manager.remove_action_group(self._action_group)
 
-        # Make sure the manager updates
+        # Make sure the manager updates        
         manager.ensure_update()
+
+    def _on_next_bookmark(self, action):
+        print 'next'
+        
+    def _on_previous_bookmark(self, action):
+        print 'previous'        
         
     def _on_toggle_bookmark(self, action, add_comment=False, hot_key=None):
         # Get document uri

@@ -144,7 +144,7 @@ class bookmark_list(object):
                     self._list[uri]["store"].set_value(row, 0, line)
                     iters[line] = row
                     
-                    # Upadate configuration
+                    # Update configuration
                     self._config.set(uri, str(line), comment)
                     
                 elif (end_line < 0 and line >= cur_line) or (end_line >= 0 and line > end_line):
@@ -152,7 +152,7 @@ class bookmark_list(object):
                     self._list[uri]["store"].set_value(row, 0, line)
                     iters[line] = row
                     
-                    # Upadate configuration
+                    # Update configuration
                     self._config.set(uri, str(line), comment)
                     
                 else:
