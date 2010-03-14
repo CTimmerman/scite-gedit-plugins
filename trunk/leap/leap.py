@@ -5,8 +5,8 @@ import gedit
 import re
 from gettext import gettext as _
 import string
-class Leap:
 
+class Leap:
     def __init__(self, statusbar, view, window):
         self.window = window
         self.view = view
@@ -120,6 +120,9 @@ class Leap:
                 self.update_statusbar()
                 self.search(self.search_string, direction=self.searching_forward)
                 return True  
+            elif event.keyval == gtk.keysyms.Escape:
+                print "escaped"
+                self.doc.set_search_text("", 0)
 
     def on_key_release_event(self, view, event):
         if event.keyval == gtk.keysyms.Alt_L or event.keyval == gtk.keysyms.Alt_R:
