@@ -53,15 +53,20 @@ class Leap:
         previous_start_found = self.start_found.copy()
         previous_end_found = self.end_found.copy()
         self.doc.set_search_text(search_string, 0)
+        
         if direction:
             start_iter = self.anchor
             end_iter = self.doc.get_end_iter()            
             if self.doc.search_forward(start_iter, end_iter, self.start_found, self.end_found):
+                start_offset =  self.start_found.get_offset()
+                end_offset =  self.end_found.get_offset()
                 destination_iter = self.end_found
                 self.doc.place_cursor(destination_iter)
                 self.view.scroll_to_iter(destination_iter, 0)
                 self.doc.remove_tag_by_name("anchor", previous_start_found, previous_end_found)
-                self.doc.apply_tag_by_name("anchor", self.start_found, self.end_found)
+                #self.doc.apply_tag_by_name("anchor", self.start_found, self.end_found)
+                self.doc.apply_tag_by_name("anchor", self.start_found,
+                    self.doc.get_iter_at_offset(end_offset+1))
                 #self.doc.set_search_text("", 0)
                 self.previous_search_string = search_string
             # if not found, move back to anchor
@@ -74,11 +79,15 @@ class Leap:
             start_iter = self.doc.get_start_iter()
             end_iter = self.anchor
             if self.doc.search_backward(start_iter, end_iter, self.start_found, self.end_found):
+                start_offset =  self.start_found.get_offset()
+                end_offset =  self.end_found.get_offset()                
                 destination_iter = self.start_found
                 self.doc.place_cursor(destination_iter)
                 self.view.scroll_to_iter(destination_iter, 0)
                 self.doc.remove_tag_by_name("anchor", previous_start_found, previous_end_found)
-                self.doc.apply_tag_by_name("anchor", self.start_found, self.end_found)
+                #self.doc.apply_tag_by_name("anchor", self.start_found, self.end_found)
+                self.doc.apply_tag_by_name("anchor", self.doc.get_iter_at_offset(start_offset-1),
+                    self.end_found)
                 #self.doc.set_search_text("", 0)
                 self.previous_search_string = search_string
             # if not found, move back to anchor
