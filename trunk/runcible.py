@@ -38,6 +38,7 @@ try:
     _ = lambda s: gettext.dgettext(GETTEXT_PACKAGE, s);
 except:
     _ = lambda s: s
+a = "123"
 
 
 class ConfigDialog(gtk.Dialog):
@@ -203,7 +204,6 @@ class GeditTerminal(gtk.HBox):
             self.run(self.get_document_path())
             return True
         return False
-
     def on_vte_button_press(self, term, event):
         if event.button == 1:
             col, row = int(floor(event.x / self._vte.get_char_width())), int(floor(event.y / self._vte.get_char_height()))
@@ -325,26 +325,33 @@ class TerminalWindowHelper(object):
         image.set_from_icon_name("utilities-terminal", gtk.ICON_SIZE_MENU)
     
         bottom = window.get_bottom_panel()
-        #bottom.add_item(self._panel, _("Runcible"), image)
+        bottom.add_item(self._panel, _("Runcible"), image)
         pane = gtk.HPaned(); 
         #tab = window.get_active_tab(); 
-
-        v = window.get_bottom_panel().get_parent()
+            
+        v = bottom.get_parent()
         h = v.get_parent()
         v.reparent(pane);
-        v.set_size_request(800, 100)
-        self._panel.set_size_request(100, 100)
-#        pane.pack_start (v)
-   #     pane.pack_start (self._panel, expand=False)
-        pane.add(self._panel)
+        #v.set_size_request(1300, 100)
+        #self._panel.set_size_request(100, 100)
+        #pane.add(self._panel)
+        bottom = window.get_bottom_panel()
+        bottom.reparent(pane)
+        pane.add(bottom)
         h.add(pane);
-        
+        self.splitter = pane
         #self._panel.set_position(400)
         pane.show_all(); 
-        bottom.hide()
+        gobject.timeout_add(500, self.resize)
         self._insert_menu()
-        #window.set_focus_chain([window.get_bottom_panel(), self._panel, window.get_side_panel()])
         
+    def resize(self):
+        size = self._window.get_size()
+        if size:
+            self.splitter.set_position(size[0]-600)
+            return False
+        return True      
+          
     def deactivate(self):
         self._remove_menu()
         bottom = self._window.get_bottom_panel()
@@ -414,8 +421,8 @@ class TerminalPlugin(gedit.Plugin):
         window.get_data(self.WINDOW_DATA_KEY).deactivate()
         window.set_data(self.WINDOW_DATA_KEY, None)
 
-    def update_ui(self, window):
-        window.get_data(self.WINDOW_DATA_KEY).update_ui()
+    #def update_ui(self, window):
+    #    window.get_data(self.WINDOW_DATA_KEY).update_ui()
 
 gconf_client = gconf.client_get_default()
 def gconf_get_bool(key, default = False):
