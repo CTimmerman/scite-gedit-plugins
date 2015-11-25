@@ -1,0 +1,1 @@
+Some plugins for gedit to help scite refugees adapt easier.
